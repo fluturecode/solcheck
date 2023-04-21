@@ -1,7 +1,19 @@
 [package]
-name = "video-nft-sol-test"
+name = "videsol"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 solana-sdk = "1.15.2"
+serde = {version = "1.0.126", features = ['derive']}
+serde_bytes = "0.11.5"
+
+[profile.release]
+lto = true
+debug = true
+panic = 'abort'
+
+[workspace]
+members = [
+  "/Users/elizabetheidelson/Desktop/video-nft-sol-test/Cargo.toml",
+]
