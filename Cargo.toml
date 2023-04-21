@@ -1,0 +1,7 @@
+[package]
+name = "video-nft-sol-test"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+solana_sdk = "1.10.0"
