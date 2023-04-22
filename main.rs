@@ -39,45 +39,78 @@ enum Instruction {
     CreateVideoNFT,
     TransferVideoNFT,
 }
-// The process_instruction function is where the bulk of the program logic will go. This
-// function takes in the
-// program ID, accounts, and instruction data, and returns a ProgramResult indicating
-// whether the instruction was processed successfully or not.
 
-// Within the process_instruction function, you would typically parse the instruction
-// data and perform any necessary checks or validations to ensure that the instruction
-// is valid and authorized.
-fn process_instruction(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
-    instruction_data: &[u8],
-) -> ProgramResult {
-    // Parse the instruction data to get the video NFT file
-    let video_nft = parse_video_nft(instruction_data)?;
-
-    // Create a new account to hold the video NFT data
-    let account = create_account(program_id, accounts)?;
-
-    // Serialize the video NFT data and store it in the account
-    store_video_nft(&video_nft, &account)?;
-
-    Ok(())
-}
-
-fn parse_video_nft(instruction_data: &[u8]) -> Result<VideoNFT, ProgramError> {
-    // Parse the instruction data to get the video NFT file
-    // ...
+// The parse_instruction function takes in a slice of bytes (instruction_data) and returns
+// a Result with either an Instruction or a ProgramError.
+// Overall, this function is used to parse the instruction data received by the program to
+// determine which operation should be performed on the video NFT.
+fn parse_instruction(instruction_data: &[u8]) -> Result<Instruction, ProgramError> {
+    // The function matches the first byte of the instruction_data slice to either 0 or 1.
+    // If the first byte is 0, the function returns the CreateVideoNFT variant of the
+    // Instruction enum. If the first byte is 1, the function returns the TransferVideoNFT
+    // variant of the Instruction enum. If the first byte does not match either 0 or 1, the
+    // function returns an error of type ProgramError::InvalidInstructionData.
+    let instruction = match instruction_data[0] {
+        0 => Instruction::CreateVideoNFT,
+        1 => Instruction::TransferVideoNFT,
+        _ => return Err(ProgramError::InvalidInstructionData),
+    };
+    Ok(instruction)
 }
 
 fn create_account(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
 ) -> Result<AccountInfo, ProgramError> {
-    // Create a new account to hold the video NFT data
-    // ...
+    let account_info_iter = &mut accounts.iter();
+    let account = next_account_info(account_info_iter)?;
+    let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
+
+    // Check that the account does not already exist
+    if Account::unpack(&account.data.borrow())?.is_initialized {
+        return Err(ProgramError::AccountAlreadyInitialized);
+    }
+
+    // Calculate the required account size
+    let data_len = size_of::<VideoNFT>() + rent.minimum_balance(size_of::<Account>());
+    let lamports = rent
+        .minimum_balance(data_len)
+        .max(1)
+        .saturating_sub(account.lamports());
+
+    // Create the account
+    **account_info_iter = AccountInfo::new(
+        account_info_iter.next().unwrap().key,
+        false,
+        true,
+        lamports,
+        data_len as u64,
+        program_id,
+        false,
+        0,
+    );
+    let mut new_account = Account::unpack_unchecked(&account.data.borrow())?;
+    new_account.is_initialized = true;
+    new_account.serialize(&mut *account.data.borrow_mut())?;
+    Ok(account.clone())
 }
 
+// The store_video_nft function takes a reference to a VideoNFT and an AccountInfo as
+// arguments, and returns a Result with either Ok(()) or a ProgramError.
+// The function retrieves the account data by borrowing it mutably and unpacks it as an
+// Account struct. It then calculates the offset to the start of the video NFT data by
+// taking the size of the Account struct. Next, it retrieves a mutable reference to the
+// video NFT data by slicing the account.data buffer. It unpacks the video NFT data as a
+// VideoNFT struct and modifies its data field to the new video NFT data provided. Finally,
+// it packs the updated VideoNFT struct back into the video NFT data buffer.
+// Overall, this function is used to store the video NFT data in a given account.
 fn store_video_nft(video_nft: &VideoNFT, account: &AccountInfo) -> Result<(), ProgramError> {
-    // Serialize the video NFT data and store it in the account
-    // ...
+    let mut data = account.data.borrow_mut();
+    let account_data = Account::unpack_unchecked(&data)?;
+    let offset = size_of::<Account>();
+    let video_nft_data = &mut data[offset..];
+    let mut video_nft_account = VideoNFT::unpack_unchecked(video_nft_data)?;
+    video_nft_account.data = video_nft.data.clone();
+    video_nft_account.pack(video_nft_data)?;
+    Ok(())
 }
