@@ -26,11 +26,32 @@ fn process_instruction(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    // Parse the instruction data and perform any necessary checks or validations
-    // ...
+    // Parse the instruction data to get the video NFT file
+    let video_nft = parse_video_nft(instruction_data)?;
 
-    // Upload the video NFT to the blockchain
-    // ...
+    // Create a new account to hold the video NFT data
+    let account = create_account(program_id, accounts)?;
+
+    // Serialize the video NFT data and store it in the account
+    store_video_nft(&video_nft, &account)?;
 
     Ok(())
+}
+
+fn parse_video_nft(instruction_data: &[u8]) -> Result<VideoNFT, ProgramError> {
+    // Parse the instruction data to get the video NFT file
+    // ...
+}
+
+fn create_account(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+) -> Result<AccountInfo, ProgramError> {
+    // Create a new account to hold the video NFT data
+    // ...
+}
+
+fn store_video_nft(video_nft: &VideoNFT, account: &AccountInfo) -> Result<(), ProgramError> {
+    // Serialize the video NFT data and store it in the account
+    // ...
 }
