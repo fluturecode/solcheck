@@ -114,3 +114,22 @@ fn store_video_nft(video_nft: &VideoNFT, account: &AccountInfo) -> Result<(), Pr
     video_nft_account.pack(video_nft_data)?;
     Ok(())
 }
+
+fn create_video_nft(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
+    let account_info_iter = &mut accounts.iter();
+    let mint_info = next_account_info(account_info_iter)?;
+    let video_info = next_account_info(account_info_iter)?;
+    let payer_info = next_account_info(account_info_iter)?;
+    let new_account_info = next_account_info(account_info_iter)?;
+
+    // Create the new video NFT account
+    let video_account = create_account(program_id, accounts)?;
+
+    // Initialize the mint
+    initialize_mint(
+        program_id,
+        mint_info.clone(),
+        payer_info.clone(),
+        None,
+        0,
+    )?;
