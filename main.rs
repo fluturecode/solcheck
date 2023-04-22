@@ -3,16 +3,42 @@
 // the program's entry point and `Pubkey` to handle public keys.
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
-    entrypoint,
     entrypoint::ProgramResult,
+    msg,
+    program_error::ProgramError,
+    program_pack::Pack,
     pubkey::Pubkey,
+    sysvar::{Rent, Sysvar},
 };
 
-// The entrypoint! macro defines the program's entry point. In this case, we are simply
-// calling a function named process_instruction and passing in the program ID, accounts,
-// and instruction data.
-entrypoint!(process_instruction);
+//  Rust use statement that imports the necessary types and functions from the spl_token
+// crate for working with token accounts and mints on the Solana blockchain.
+use spl_token::{
+    instruction::{approve, initialize_account, initialize_mint, mint_to},
+    state::{Account, Mint},
+};
 
+// #[derive(Debug)] is a Rust attribute that enables the automatic implementation of the
+// Debug trait for the struct. The Debug trait provides a convenient way to print out the
+// contents of a struct for debugging purposes.
+#[derive(Debug)]
+struct VideoNFT {
+    data: Vec<u8>,
+}
+
+// The #[derive(Debug)] macro annotation automatically generates the implementation of the
+// Debug trait for the Instruction enum. This allows developers to easily print the
+// Instruction enum using the println! macro or the dbg! macro for debugging purposes.
+
+// The Instruction enum defines two variants, CreateVideoNFT and TransferVideoNFT, which
+// represent the two possible operations that can be performed on the video NFT. The
+// CreateVideoNFT variant is used to create a new video NFT, while the TransferVideoNFT
+// variant is used to transfer an existing video NFT to a new owner.
+#[derive(Debug)]
+enum Instruction {
+    CreateVideoNFT,
+    TransferVideoNFT,
+}
 // The process_instruction function is where the bulk of the program logic will go. This
 // function takes in the
 // program ID, accounts, and instruction data, and returns a ProgramResult indicating
